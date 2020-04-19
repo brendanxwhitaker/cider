@@ -1,0 +1,10 @@
+*.csv
+.mypy_cache/
+*__pycache__
+*.log
+*.html
+*.swp
+*.pkl
+*~
+*.png
+connect
