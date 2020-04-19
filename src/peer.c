@@ -41,6 +41,9 @@ int read_sdp(char path[], char *sdp);
 int test_connectivity() {
 	juice_set_log_level(JUICE_LOG_LEVEL_DEBUG);
 
+    printf("Max SDP string length: %d\n", JUICE_MAX_SDP_STRING_LEN);
+    printf("Max SDP ADDRESS string length: %d\n", JUICE_MAX_ADDRESS_STRING_LEN);
+
 	// Agent 1: Create agent
 	juice_config_t config1;
 	memset(&config1, 0, sizeof(config1));
@@ -151,12 +154,17 @@ const int write_sdp(char path[], const char *sdp) {
 
 int read_sdp(char path[], char *sdp) {
     FILE *fp = fopen(path, "r");
+    char line[JUICE_MAX_SDP_STRING_LEN];
     if (fp != NULL) {
-        fgets(sdp, JUICE_MAX_ADDRESS_STRING_LEN, (FILE*)fp);
+
+        int i = 0;
+        while (fgets(line, JUICE_MAX_SDP_STRING_LEN, (FILE*)fp) != NULL) {
+            strcat(sdp, line);
+            i++;
+        }
         fclose(fp);
         return 0;
     }
     printf("Remote SDP not found: %s\n", path);
     return -1;
 }
-
