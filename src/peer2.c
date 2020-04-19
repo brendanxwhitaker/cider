@@ -86,11 +86,11 @@ int test_connectivity() {
     printf("Confirm description 'sdp2' has been loaded on remote: ");
     fgets(dummy, 20, stdin);
 
-	// Agent 2: Gather candidates (and send them to agent 1)
-	juice_gather_candidates(agent2);
-
     // Agent 2: Add sdp from agent 1.
 	juice_add_remote_candidate(agent2, sdp1);
+
+	// Agent 2: Gather candidates (and send them to agent 1)
+	juice_gather_candidates(agent2);
 
 	sleep(2);
 

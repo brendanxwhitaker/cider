@@ -74,7 +74,7 @@ int test_connectivity() {
 
 	// Agent 1: Read local description of agent 2 from stdin.
 	char sdp2[JUICE_MAX_ADDRESS_STRING_LEN];
-    strcpy(sdp1, read_sdp(SDP1_PATH));
+    strcpy(sdp2, read_sdp(SDP1_PATH));
 	printf("Local description 2:\n###\n%s\n###\n", sdp2);
 
 	// Agent 1: Receive description from agent 2
@@ -86,11 +86,11 @@ int test_connectivity() {
     printf("Confirm agent 2 has added remote candidate: ");
     fgets(dummy, 20, stdin);
 
-	// Agent 1: Gather candidates (and send them to agent 2)
-	juice_gather_candidates(agent1);
-
     // Agent 1: Add sdp from agent 2.
 	juice_add_remote_candidate(agent1, sdp2);
+
+	// Agent 1: Gather candidates (and send them to agent 2)
+	juice_gather_candidates(agent1);
 
 	sleep(2);
 
