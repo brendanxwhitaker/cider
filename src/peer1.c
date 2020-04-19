@@ -59,11 +59,12 @@ int test_connectivity() {
     char* SDP1_PATH = "sdp1";
     char* SDP2_PATH = "sdp2";
 
+    //+++++++++++DESCRIPTION EXCHANGE++++++++++++
+
 	// Agent 1: Generate local description
 	char sdp1[JUICE_MAX_SDP_STRING_LEN];
 	juice_get_local_description(agent1, sdp1, JUICE_MAX_SDP_STRING_LEN);
 	printf("Local description 1:\n###\n%s\n###\n", sdp1);
-    printf("Length of description: %d\n", strlen(sdp1));
     write_sdp(SDP1_PATH, sdp1);
 
     // Wait until SDPs have been copied between hosts.
@@ -71,21 +72,27 @@ int test_connectivity() {
     printf("Confirm file 'sdp2' is in working directory: ");
     fgets(dummy, 20, stdin);
 
-	// Agent 2: Read local description from stdin.
+	// Agent 1: Read local description of agent 2 from stdin.
 	char sdp2[JUICE_MAX_ADDRESS_STRING_LEN];
     strcpy(sdp1, read_sdp(SDP1_PATH));
 	printf("Local description 2:\n###\n%s\n###\n", sdp2);
-    printf("Length of description: %d\n", strlen(sdp2));
 
 	// Agent 1: Receive description from agent 2
 	juice_set_remote_description(agent1, sdp2);
 
+    //+++++++++++++++++++++++++++++++++++++++++++
+
+    // Wait until SDPs have been copied between hosts.
+    printf("Confirm agent 2 has added remote candidate: ");
+    fgets(dummy, 20, stdin);
+
 	// Agent 1: Gather candidates (and send them to agent 2)
 	juice_gather_candidates(agent1);
-	sleep(2);
 
     // Agent 1: Add sdp from agent 2.
 	juice_add_remote_candidate(agent1, sdp2);
+
+	sleep(2);
 
 	// -- Connection should be finished --
 
