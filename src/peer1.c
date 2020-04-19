@@ -142,31 +142,3 @@ static void on_recv1(juice_agent_t *agent, const char *data, size_t size, void *
 	buffer[size] = '\0';
 	printf("Received 1: %s\n", buffer);
 }
-
-const int write_sdp(char path[], const char *sdp) {
-    FILE *fp = fopen(path, "wb");
-    if (fp != NULL) {
-        fputs(sdp, fp);
-        fclose(fp);
-        return 0;
-    }
-    printf("Failed to open SDP path: %s\n", path);
-    return -1;
-}
-
-int read_sdp(char path[], char *sdp) {
-    FILE *fp = fopen(path, "r");
-    char line[JUICE_MAX_SDP_STRING_LEN];
-    if (fp != NULL) {
-
-        int i = 0;
-        while (fgets(line, JUICE_MAX_SDP_STRING_LEN, (FILE*)fp) != NULL) {
-            strcat(sdp, line);
-            i++;
-        }
-        fclose(fp);
-        return 0;
-    }
-    printf("Remote SDP not found: %s\n", path);
-    return -1;
-}
