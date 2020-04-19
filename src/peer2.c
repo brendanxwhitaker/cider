@@ -30,6 +30,8 @@ static juice_agent_t *agent2;
 
 static void on_state_changed2(juice_agent_t *agent, juice_state_t state, void *user_ptr);
 
+static void on_candidate1(juice_agent_t *agent, const char *sdp, void *user_ptr);
+
 static void on_gathering_done2(juice_agent_t *agent, void *user_ptr);
 
 static void on_recv2(juice_agent_t *agent, const char *data, size_t size, void *user_ptr);
@@ -56,8 +58,8 @@ int test_connectivity() {
 
 	agent2 = juice_create(&config2);
 
-    char* SDP2_PATH = "sdp2";
     char* SDP1_PATH = "sdp1";
+    char* SDP2_PATH = "sdp2";
 
     //+++++++++++DESCRIPTION EXCHANGE++++++++++++
 
@@ -78,27 +80,19 @@ int test_connectivity() {
 	char sdp2[JUICE_MAX_ADDRESS_STRING_LEN];
 	juice_get_local_description(agent2, sdp2, JUICE_MAX_SDP_STRING_LEN);
 	printf("Local description 2:\n###\n%s\n###\n", sdp2);
-    write_sdp(SDP2_PATH, sdp2);
-
-    //+++++++++++++++++++++++++++++++++++++++++++
 
     // Wait until SDPs have been copied between hosts.
     printf("Confirm file 'sdp2' is in remote working directory: ");
     fgets(dummy, 20, stdin);
+    write_sdp(SDP2_PATH, sdp2);
+
+    //+++++++++++++++++++++++++++++++++++++++++++
 
 	// Agent 2: Gather candidates (and send them to agent 1)
 	juice_gather_candidates(agent2);
-
-    printf("Confirm remote done gathering: ");
-    fgets(dummy, 20, stdin);
-
-    // Agent 2: Add sdp from agent 1.
-	juice_add_remote_candidate(agent2, sdp1);
-
 	sleep(2);
 
-    // Agent 2: Wait until remote candidate has been added on agent 1.
-    printf("Confirm agent 1 has added remote candidate: ");
+    printf("Confirm remote done gathering: ");
     fgets(dummy, 20, stdin);
 
 	// -- Connection should be finished --
@@ -139,6 +133,27 @@ static void on_state_changed2(juice_agent_t *agent, juice_state_t state, void *u
 		const char *message = "Hello from 2";
 		juice_send(agent, message, strlen(message));
 	}
+}
+
+// Agent 2: on local candidate gathered
+static void on_candidate2(juice_agent_t *agent, const char *sdp, void *user_ptr) {
+    char* SDP1_CANDIDATE_PATH = "sdp1_candidate";
+    char* SDP2_CANDIDATE_PATH = "sdp2_candidate";
+
+	printf("Candidate 2: %s\n", sdp);
+    write_sdp(SDP2_CANDIDATE_PATH, sdp);
+
+    // Agent 2: Wait until candidates have been copied.
+    char dummy[20];
+    printf("Confirm sdp1_candidate in working directory: ");
+    fgets(dummy, 20, stdin);
+
+    // Agent 2: Read SDP candidate from agent 1
+	char sdp1_candidate[JUICE_MAX_ADDRESS_STRING_LEN];
+    strcpy(sdp1_candidate, read_sdp(SDP1_CANDIDATE_PATH));
+
+	// Agent 2: Receive it from agent 1
+	juice_add_remote_candidate(agent2, sdp1_candidate);
 }
 
 // Agent 2: on local candidates gathering done

@@ -30,6 +30,8 @@ static juice_agent_t *agent1;
 
 static void on_state_changed1(juice_agent_t *agent, juice_state_t state, void *user_ptr);
 
+static void on_candidate1(juice_agent_t *agent, const char *sdp, void *user_ptr);
+
 static void on_gathering_done1(juice_agent_t *agent, void *user_ptr);
 
 static void on_recv1(juice_agent_t *agent, const char *data, size_t size, void *user_ptr);
@@ -74,7 +76,7 @@ int test_connectivity() {
 
 	// Agent 1: Read local description of agent 2 from stdin.
 	char sdp2[JUICE_MAX_ADDRESS_STRING_LEN];
-    strcpy(sdp2, read_sdp(SDP1_PATH));
+    strcpy(sdp2, read_sdp(SDP2_PATH));
 	printf("Local description 2:\n###\n%s\n###\n", sdp2);
 
 	// Agent 1: Receive description from agent 2
@@ -84,14 +86,10 @@ int test_connectivity() {
 
 	// Agent 1: Gather candidates (and send them to agent 2)
 	juice_gather_candidates(agent1);
+	sleep(2);
 
     printf("Confirm remote done gathering: ");
     fgets(dummy, 20, stdin);
-
-    // Agent 1: Add sdp from agent 2.
-	juice_add_remote_candidate(agent1, sdp2);
-
-	sleep(2);
 
 	// -- Connection should be finished --
 
@@ -131,6 +129,27 @@ static void on_state_changed1(juice_agent_t *agent, juice_state_t state, void *u
 		const char *message = "Hello from 1";
 		juice_send(agent, message, strlen(message));
 	}
+}
+
+// Agent 1: on local candidate gathered
+static void on_candidate1(juice_agent_t *agent, const char *sdp, void *user_ptr) {
+    char* SDP1_CANDIDATE_PATH = "sdp1_candidate";
+    char* SDP2_CANDIDATE_PATH = "sdp2_candidate";
+
+	printf("Candidate 1: %s\n", sdp);
+    write_sdp(SDP1_CANDIDATE_PATH, sdp);
+
+    // Agent 1: Wait until candidates have been copied.
+    char dummy[20];
+    printf("Confirm sdp2_candidate in working directory: ");
+    fgets(dummy, 20, stdin);
+
+    // Agent 1: Read SDP candidate from agent 2
+	char sdp2_candidate[JUICE_MAX_ADDRESS_STRING_LEN];
+    strcpy(sdp2_candidate, read_sdp(SDP2_CANDIDATE_PATH));
+
+	// Agent 1: Receive it from agent 2
+	juice_add_remote_candidate(agent1, sdp2_candidate);
 }
 
 // Agent 1: on local candidates gathering done
