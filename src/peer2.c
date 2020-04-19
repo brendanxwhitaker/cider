@@ -30,7 +30,7 @@ static juice_agent_t *agent2;
 
 static void on_state_changed2(juice_agent_t *agent, juice_state_t state, void *user_ptr);
 
-static void on_candidate1(juice_agent_t *agent, const char *sdp, void *user_ptr);
+static void on_candidate2(juice_agent_t *agent, const char *sdp, void *user_ptr);
 
 static void on_gathering_done2(juice_agent_t *agent, void *user_ptr);
 
@@ -81,11 +81,11 @@ int test_connectivity() {
 	char sdp2[JUICE_MAX_ADDRESS_STRING_LEN];
 	juice_get_local_description(agent2, sdp2, JUICE_MAX_SDP_STRING_LEN);
 	printf("Local description 2:\n###\n%s\n###\n", sdp2);
+    write_sdp(SDP2_PATH, sdp2);
 
     // Wait until SDPs have been copied between hosts.
     printf("Confirm file 'sdp2' is in remote working directory: ");
     fgets(dummy, 20, stdin);
-    write_sdp(SDP2_PATH, sdp2);
 
     //+++++++++++++++++++++++++++++++++++++++++++
 
