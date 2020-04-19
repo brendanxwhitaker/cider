@@ -52,6 +52,7 @@ int test_connectivity() {
 	// config2.stun_server_host = "stun.l.google.com";
 	// config2.stun_server_port = 19302;
 	config2.cb_state_changed = on_state_changed2;
+	config2.cb_candidate = on_candidate2;
 	config2.cb_gathering_done = on_gathering_done2;
 	config2.cb_recv = on_recv2;
 	config2.user_ptr = NULL;
