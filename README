@@ -8,5 +8,9 @@ Usage
 =====
 $ ./juice.sh
 $ source ./update_ld_library_path.sh
-$ ./compile.sh
+$ ./compile.sh <PEER_ID>
 # ./connect
+
+Note: PEER_ID is defined to be either 1 or 2.
+If 1, the peer is controlling.
+If 2, the peer is controlled.
