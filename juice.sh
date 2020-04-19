@@ -8,4 +8,3 @@ mkdir build
 cd build
 cmake -DUSE_NETTLE=1 ..
 make
-cp *.so
