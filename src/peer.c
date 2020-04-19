@@ -59,7 +59,7 @@ int test_connectivity() {
 	// Agent 1: Generate local description
 	char sdp1[JUICE_MAX_SDP_STRING_LEN];
 	juice_get_local_description(agent1, sdp1, JUICE_MAX_SDP_STRING_LEN);
-	printf("Local description 1:\n%s\n", sdp1);
+	printf("Local description 1:\n###\n%s\n###\n", sdp1);
     write_sdp(SDP1_PATH, sdp1);
 
     // Wait until SDPs have been copied between hosts.
@@ -70,6 +70,7 @@ int test_connectivity() {
 	// Agent 2: Read local description from stdin.
 	char sdp2[JUICE_MAX_ADDRESS_STRING_LEN];
     read_sdp(SDP2_PATH, sdp2);
+	printf("Local description 2:\n###\n%s\n###\n", sdp2);
 
 	// Agent 1: Receive description from agent 2
 	juice_set_remote_description(agent1, sdp2);
