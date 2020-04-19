@@ -83,14 +83,17 @@ int test_connectivity() {
     //+++++++++++++++++++++++++++++++++++++++++++
 
     // Wait until SDPs have been copied between hosts.
-    printf("Confirm description 'sdp2' has been loaded on remote: ");
+    printf("Confirm file 'sdp2' is in remote working directory: ");
+    fgets(dummy, 20, stdin);
+
+	// Agent 2: Gather candidates (and send them to agent 1)
+	juice_gather_candidates(agent2);
+
+    printf("Confirm remote done gathering: ");
     fgets(dummy, 20, stdin);
 
     // Agent 2: Add sdp from agent 1.
 	juice_add_remote_candidate(agent2, sdp1);
-
-	// Agent 2: Gather candidates (and send them to agent 1)
-	juice_gather_candidates(agent2);
 
 	sleep(2);
 

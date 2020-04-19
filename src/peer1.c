@@ -82,15 +82,14 @@ int test_connectivity() {
 
     //+++++++++++++++++++++++++++++++++++++++++++
 
-    // Wait until SDPs have been copied between hosts.
-    printf("Confirm agent 2 has added remote candidate: ");
+	// Agent 1: Gather candidates (and send them to agent 2)
+	juice_gather_candidates(agent1);
+
+    printf("Confirm remote done gathering: ");
     fgets(dummy, 20, stdin);
 
     // Agent 1: Add sdp from agent 2.
 	juice_add_remote_candidate(agent1, sdp2);
-
-	// Agent 1: Gather candidates (and send them to agent 2)
-	juice_gather_candidates(agent1);
 
 	sleep(2);
 
