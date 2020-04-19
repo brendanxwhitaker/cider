@@ -3,3 +3,10 @@
 +-----+
 
 A tiny utility for UDP NAT traversal built on top of libjuice.
+
+Usage
+=====
+$ ./juice.sh
+$ source ./update_ld_library_path.sh
+$ ./compile.sh
+# ./connect
