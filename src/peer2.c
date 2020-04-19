@@ -36,7 +36,7 @@ static void on_recv2(juice_agent_t *agent, const char *data, size_t size, void *
 
 const int write_sdp(char path[], const char *sdp);
 
-int read_sdp(char path[], char *sdp);
+const char * read_sdp(char path[]);
 
 int test_connectivity() {
 	juice_set_log_level(JUICE_LOG_LEVEL_DEBUG);
@@ -66,7 +66,7 @@ int test_connectivity() {
 
 	// Agent 2: Read local description from stdin.
 	char sdp1[JUICE_MAX_SDP_STRING_LEN];
-    read_sdp(SDP1_PATH, sdp1);
+    strcpy(sdp1, read_sdp(SDP1_PATH));
 	printf("Local description 1:\n###\n%s\n###\n", sdp1);
 
     // Agent 2: Receive description from agent 1

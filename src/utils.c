@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h> // for sleep
 
@@ -37,20 +38,15 @@ const int write_sdp(char path[], const char *sdp) {
     return -1;
 }
 
-int read_sdp(char path[], char *sdp) {
-    FILE *fp = fopen(path, "r");
-    char line[JUICE_MAX_SDP_STRING_LEN];
-    if (fp != NULL) {
-
-        int i = 0;
-        while (fgets(line, JUICE_MAX_SDP_STRING_LEN, (FILE*)fp) != NULL) {
-            printf("Line read: %s\n", line);
-            strcat(sdp, line);
-            i++;
-        }
-        fclose(fp);
-        return 0;
-    }
-    printf("Remote SDP not found: %s\n", path);
-    return -1;
+const char * read_sdp(char path[]) {
+    FILE *f = fopen(path, "rb");
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    
+    char *string = malloc(fsize + 1);
+    fread(string, 1, fsize, f);
+    fclose(f);
+    string[fsize] = 0;
+    return string;
 }
