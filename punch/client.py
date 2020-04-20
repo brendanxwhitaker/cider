@@ -94,6 +94,7 @@ class Client():
     def send_msg(self, sock):
         while True:
             data = sys.stdin.readline()
+            print("%.10f:" % time.time(), data)
             data = data.encode("ascii")
             sock.sendto(data, self.target)
 
