@@ -86,8 +86,8 @@ class Client():
                 data, addr = sock.recvfrom(1024)
                 data = data.decode("ascii")
                 if addr == self.target or addr == self.master:
-                    print("DEBUG:", data)
-                    sys.stdout.write(data)
+                    print("%.10f:" % time.time(), data)
+                    # sys.stdout.write(data)
                     if data == "punching...\n":  # peer是restrict
                         sock.sendto("end punching".encode("ascii"), addr)
 
