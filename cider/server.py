@@ -4,7 +4,7 @@
 import sys
 import socket
 import struct
-from typing import Dict
+from typing import Dict, Tuple
 from collections import namedtuple
 
 # pylint: disable=invalid-name
@@ -17,7 +17,7 @@ UnknownNAT = "Unknown NAT"  # 4
 NATTYPE = (FullCone, RestrictNAT, RestrictPortNAT, SymmetricNAT, UnknownNAT)
 
 
-def addr2bytes(addr, nat_type_id):
+def addr2bytes(addr: Tuple[str, int], nat_type_id: str) -> bytes:
     """Convert an address pair to a hash."""
     host, port = addr
     try:
@@ -29,12 +29,12 @@ def addr2bytes(addr, nat_type_id):
     except ValueError:
         raise ValueError("invalid port")
     try:
-        nat_type_id = int(nat_type_id)
+        nat_type_idx = int(nat_type_id)
     except ValueError:
         raise ValueError("invalid NAT type")
     byte_address = socket.inet_aton(host)
     byte_address += struct.pack("H", port)
-    byte_address += struct.pack("H", nat_type_id)
+    byte_address += struct.pack("H", nat_type_idx)
     return byte_address
 
 
@@ -43,6 +43,7 @@ def main() -> None:
     port = int(sys.argv[1])
 
     sockfd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    print("Sock type:", type(sockfd))
     sockfd.bind(("", port))
     print("listening on *:%d (udp)" % port)
 
@@ -76,6 +77,8 @@ def main() -> None:
             pool, nat_type_id = data.strip().split()
             print("DEBUG: pool:", pool)
             print("DEBUG: type addr:", type(addr))
+            print("DEBUG: addr:", addr)
+            print("DEBUG: addr:", type(addr[0]), type(addr[1]))
             ok_msg_bytes = ("ok {0}".format(pool)).encode("ascii")
             print("DEBUG: ok_msg_bytes:", ok_msg_bytes)
             sockfd.sendto(ok_msg_bytes, addr)

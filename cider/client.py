@@ -81,12 +81,17 @@ class Client:
             )
         )
 
-    def recv_msg(self, sock, event: Optional[Event] = None, is_restrict: bool = False):
+    def recv_msg(
+        self,
+        sock: socket.socket,
+        event: Optional[Event] = None,
+        is_restrict: bool = False,
+    ) -> None:
         """ Receive message callback. """
         if is_restrict and event:
             while True:
-                data, addr = sock.recvfrom(1024)
-                data = data.decode("ascii")
+                data_bytes, addr = sock.recvfrom(1024)
+                data = data_bytes.decode("ascii")
                 if self.periodic_running:
                     print("periodic_send is alive")
                     self.periodic_running = False
@@ -101,15 +106,15 @@ class Client:
                         sock.sendto("end punching\n".encode("ascii"), addr)
         else:
             while True:
-                data, addr = sock.recvfrom(1024)
-                data = data.decode("ascii")
+                data_bytes, addr = sock.recvfrom(1024)
+                data = data_bytes.decode("ascii")
                 if addr in (self.target, self.master):
                     print("%.10f:" % time.time(), data)
                     # sys.stdout.write(data)
                     if data == "punching...\n":  # peer是restrict
                         sock.sendto("end punching".encode("ascii"), addr)
 
-    def send_msg(self, sock):
+    def send_msg(self, sock: socket.socket) -> None:
         """ Send message callback. """
         while True:
             data = sys.stdin.readline()
@@ -119,7 +124,7 @@ class Client:
 
     @staticmethod
     def start_working_threads(
-        send, recv, sock, event: Optional[Event], is_restrict: bool
+        send, recv, sock: socket.socket, event: Optional[Event], is_restrict: bool
     ) -> None:
         """ Start the send and recv threads. """
         ts = Thread(target=send, args=(sock,))
@@ -142,7 +147,7 @@ class Client:
 
         cancel_event = Event()
 
-        def send(count):
+        def send(count: int) -> None:
             self.sockfd.sendto("punching...\n".encode("ascii"), self.target)
             print(("UDP punching package {0} sent".format(count)))
             if self.periodic_running:
@@ -161,18 +166,20 @@ class Client:
     def chat_symmetric(self) -> None:
         """ Completely rely on relay server (TURN). """
 
-        def send_msg_symm(sock):
+        def send_msg_symm(sock: socket.socket) -> None:
             """ Send message callback. """
             while True:
                 data = "msg " + sys.stdin.readline()
                 sock.sendto(data.encode("ascii"), self.master)
 
         # pylint: disable=unused-argument
-        def recv_msg_symm(sock, event: Optional[Event], is_restrict: bool) -> None:
+        def recv_msg_symm(
+            sock: socket.socket, event: Optional[Event], is_restrict: bool
+        ) -> None:
             """ Receive message callback. """
             while True:
-                data, addr = sock.recvfrom(1024)
-                data = data.decode("ascii")
+                data_bytes, addr = sock.recvfrom(1024)
+                data = data_bytes.decode("ascii")
                 if addr == self.master:
                     sys.stdout.write(data)
 

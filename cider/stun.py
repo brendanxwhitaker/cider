@@ -112,19 +112,6 @@ def gen_tran_id() -> str:
     return a
 
 
-"""
-NATParameters = TypedDict("NATParameters", {
-    "Resp": bool,
-    "ExternalIP": str,
-    "ExternalPort": int,
-    "SourceIP": str,
-    "SourcePort": int,
-    "ChangedIP": str,
-    "ChangedPort": int,
-})
-"""
-
-
 class NATParameters(TypedDict):
     """ TypeVar for return value of ``stun_test()``. """
 
@@ -138,7 +125,12 @@ class NATParameters(TypedDict):
 
 
 def stun_test(
-    sock, host: str, port: int, source_ip: str, source_port: int, send_data: str = ""
+    sock: socket.socket,
+    host: str,
+    port: int,
+    source_ip: str,
+    source_port: int,
+    send_data: str = "",
 ) -> NATParameters:
     """ Connects to a STUN server to determine NAT parameters. """
     # DEBUG
@@ -331,7 +323,11 @@ def stun_test(
 
 
 def get_nat_type(
-    s, source_ip: str, source_port: int, stun_host: str = "", stun_port: int = 3478
+    sock: socket.socket,
+    source_ip: str,
+    source_port: int,
+    stun_host: str = "",
+    stun_port: int = 3478,
 ) -> Tuple[str, NATParameters]:
     """ Returns the NAT type. """
     _initialize()
@@ -339,12 +335,12 @@ def get_nat_type(
     log.debug("Do Test1")
     resp = False
     if stun_host:
-        ret = stun_test(s, stun_host, port, source_ip, source_port)
+        ret = stun_test(sock, stun_host, port, source_ip, source_port)
         resp = ret["Resp"]
     else:
         for stun_server_host in STUN_SERVERS_LIST:
             log.debug("Trying STUN host: %s", stun_server_host)
-            ret = stun_test(s, stun_server_host, port, source_ip, source_port)
+            ret = stun_test(sock, stun_server_host, port, source_ip, source_port)
             resp = ret["Resp"]
             if resp:
                 stun_host = stun_server_host
@@ -358,7 +354,7 @@ def get_nat_type(
     changed_port = ret["ChangedPort"]
     if ret["ExternalIP"] == source_ip:
         change_request = "".join([ChangeRequest, "0004", "00000006"])
-        ret = stun_test(s, stun_host, port, source_ip, source_port, change_request)
+        ret = stun_test(sock, stun_host, port, source_ip, source_port, change_request)
         if ret["Resp"]:
             typ = OpenInternet
         else:
@@ -366,13 +362,13 @@ def get_nat_type(
     else:
         change_request = "".join([ChangeRequest, "0004", "00000006"])
         log.debug("Do Test2")
-        ret = stun_test(s, stun_host, port, source_ip, source_port, change_request)
+        ret = stun_test(sock, stun_host, port, source_ip, source_port, change_request)
         log.debug("Result: %s", ret)
         if ret["Resp"]:
             typ = FullCone
         else:
             log.debug("Do Test1")
-            ret = stun_test(s, changed_ip, changed_port, source_ip, source_port)
+            ret = stun_test(sock, changed_ip, changed_port, source_ip, source_port)
             log.debug("Result: %s", ret)
             if not ret["Resp"]:
                 typ = ChangedAddressError
@@ -381,7 +377,12 @@ def get_nat_type(
                     change_port_request = "".join([ChangeRequest, "0004", "00000002"])
                     log.debug("Do Test3")
                     ret = stun_test(
-                        s, changed_ip, port, source_ip, source_port, change_port_request
+                        sock,
+                        changed_ip,
+                        port,
+                        source_ip,
+                        source_port,
+                        change_port_request,
                     )
                     log.debug("Result: %s", ret)
                     if ret["Resp"]:
