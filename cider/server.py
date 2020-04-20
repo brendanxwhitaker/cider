@@ -53,7 +53,7 @@ def main() -> None:
     ClientInfo = namedtuple("ClientInfo", "addr, nat_type_id")
     poolqueue: Dict[str, ClientInfo] = {}
     while True:
-        data_bytes, addr = sockfd.recvfrom(2)
+        data_bytes, addr = sockfd.recvfrom(1024)
         data = data_bytes.decode("ascii")
         if data.startswith("msg "):
             # forward symmetric chat msg, act as TURN server
@@ -72,6 +72,7 @@ def main() -> None:
         else:
             # help build connection between clients, act as STUN server
             print("connection from %s:%d" % addr)
+            print("DEBUG: data:", data)
             pool, nat_type_id = data.strip().split()
             print("DEBUG: pool:", pool)
             print("DEBUG: type addr:", type(addr))
