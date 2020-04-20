@@ -70,6 +70,7 @@ class Client():
         if is_restrict:
             while True:
                 data, addr = sock.recvfrom(1024)
+                data = data.decode("ascii")
                 if self.periodic_running:
                     print("periodic_send is alive")
                     self.periodic_running = False
@@ -83,6 +84,7 @@ class Client():
         else:
             while True:
                 data, addr = sock.recvfrom(1024)
+                data = data.decode("ascii")
                 if addr == self.target or addr == self.master:
                     sys.stdout.write(data)
                     if data == "punching...\n":  # peer是restrict
@@ -91,7 +93,8 @@ class Client():
     def send_msg(self, sock):
         while True:
             data = sys.stdin.readline()
-            sock.sendto(data.encode("ascii"), self.target)
+            data = data.encode("ascii")
+            sock.sendto(data, self.target)
 
     @staticmethod
     def start_working_threads(send, recv, sock, event, is_restrict):
@@ -135,6 +138,7 @@ class Client():
         def recv_msg_symm(sock, event, is_restrict):
             while True:
                 data, addr = sock.recvfrom(1024)
+                data = data.decode("ascii")
                 if addr == self.master:
                     sys.stdout.write(data)
 
