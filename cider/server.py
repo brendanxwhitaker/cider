@@ -43,14 +43,13 @@ def main() -> None:
     port = int(sys.argv[1])
 
     sockfd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    print("Sock type:", type(sockfd))
     sockfd.bind(("", port))
     print("listening on *:%d (udp)" % port)
 
     # A,B with addr_A,addr_B,pool=100
     # temp state {100:(nat_type_id, addr_A, addr_B)}
     # final state {addr_A:addr_B, addr_B:addr_A}
-    symmetric_chat_clients = {}
+    symmetric_chat_clients: Dict[Tuple[str, int], Tuple[str, Tuple[str, int]]] = {}
     ClientInfo = namedtuple("ClientInfo", "addr, nat_type_id")
     poolqueue: Dict[str, ClientInfo] = {}
     while True:
@@ -59,11 +58,11 @@ def main() -> None:
         if data.startswith("msg "):
             # forward symmetric chat msg, act as TURN server
             try:
-                sockfd.sendto(data_bytes[4:], symmetric_chat_clients[addr])
+                sockfd.sendto(data_bytes[4:], symmetric_chat_clients[addr][1])
                 print(
                     (
                         "msg successfully forwarded to {0}".format(
-                            symmetric_chat_clients[addr]
+                            symmetric_chat_clients[addr][1]
                         )
                     )
                 )
@@ -73,14 +72,8 @@ def main() -> None:
         else:
             # help build connection between clients, act as STUN server
             print("connection from %s:%d" % addr)
-            print("DEBUG: data:", data)
             pool, nat_type_id = data.strip().split()
-            print("DEBUG: pool:", pool)
-            print("DEBUG: type addr:", type(addr))
-            print("DEBUG: addr:", addr)
-            print("DEBUG: addr:", type(addr[0]), type(addr[1]))
             ok_msg_bytes = ("ok {0}".format(pool)).encode("ascii")
-            print("DEBUG: ok_msg_bytes:", ok_msg_bytes)
             sockfd.sendto(ok_msg_bytes, addr)
             print(
                 (
@@ -106,20 +99,19 @@ def main() -> None:
             except KeyError:
                 poolqueue[pool] = ClientInfo(addr, nat_type_id)
 
-            if pool in symmetric_chat_clients:
-                if nat_type_id == "3" or symmetric_chat_clients[pool][0] == "3":
+            if (pool, 0) in symmetric_chat_clients:
+                if nat_type_id == "3" or symmetric_chat_clients[(pool, 0)][0] == "3":
                     # at least one is symmetric NAT
-                    recorded_client_addr = symmetric_chat_clients[pool][1]
-                    symmetric_chat_clients[addr] = recorded_client_addr
-                    symmetric_chat_clients[recorded_client_addr] = addr
+                    recorded_client_addr = symmetric_chat_clients[(pool, 0)][1]
+                    symmetric_chat_clients[addr] = ("", recorded_client_addr)
+                    symmetric_chat_clients[recorded_client_addr] = ("", addr)
                     print("Hurray! symmetric chat link established.")
-                    del symmetric_chat_clients[pool]
+                    del symmetric_chat_clients[(pool, 0)]
                 else:
-                    del symmetric_chat_clients[
-                        pool
-                    ]  # neither clients are symmetric NAT
+                    # Neither of the clients are symmetric NATs.
+                    del symmetric_chat_clients[(pool, 0)]
             else:
-                symmetric_chat_clients[pool] = (nat_type_id, addr)
+                symmetric_chat_clients[(pool, 0)] = (nat_type_id, addr)
 
 
 if __name__ == "__main__":

@@ -47,7 +47,7 @@ class Client:
             self.periodic_running = False
             self.peer_nat_type = ""
         except (IndexError, ValueError):
-            print((sys.stderr, "usage: %s <host> <port> <pool>" % sys.argv[0]))
+            print("usage: %s <host> <port> <pool>" % sys.argv[0])
             sys.exit(65)
 
     def request_for_connection(self, nat_type_id: int = 0) -> None:
@@ -57,27 +57,19 @@ class Client:
         self.sockfd.sendto(msg, self.master)
         data, _addr = self.sockfd.recvfrom(len(self.pool) + 3)
         if data.decode("ascii") != "ok " + self.pool:
-            print((sys.stderr, "unable to request!"))
+            print("unable to request!")
             sys.exit(1)
         self.sockfd.sendto("ok".encode("ascii"), self.master)
         sys.stderr = sys.stdout
-        print(
-            (
-                sys.stderr,
-                "request sent, waiting for partner in pool '%s'..." % self.pool,
-            )
-        )
+        print("request sent, waiting for partner in pool '%s'..." % self.pool)
         data, _addr = self.sockfd.recvfrom(8)
 
         self.target, peer_nat_type_id = bytes2addr(data)
         print((self.target, peer_nat_type_id))
         self.peer_nat_type = NATTYPE[peer_nat_type_id]
         print(
-            (
-                sys.stderr,
-                "connected to {1}:{2}, its NAT type is {0}".format(
-                    self.peer_nat_type, *self.target
-                ),
+            "connected to {1}:{2}, its NAT type is {0}".format(
+                self.peer_nat_type, *self.target
             )
         )
 
