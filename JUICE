@@ -6,5 +6,8 @@ python2 server.py 8000
 python2 client.py 104.37.31.129 8000 100 0 -p 443
 python2 client.py <external_ip_of_localhost> <port_forwarded_to_localhost> <any_small_integer> <NAT_type> -p <external_port_on_nodes>
 
-# Notes: 'client.py' is the modified version in current home directory.
-# Notes: Used library is called pypunchp2p.
+# NOTES
+# =====
+# The script 'client.py' is the modified version in current home directory.
+# Used library is called pypunchp2p.
+# Make sure to turn off all VPNs on the server node.
