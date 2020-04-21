@@ -21,18 +21,12 @@ NATTYPE = (FullCone, RestrictNAT, RestrictPortNAT, SymmetricNAT, UnknownNAT)
 class Client:
     """ The UDP client for interacting with the server and other Clients. """
 
-    def __init__(self) -> None:
-        try:
-            master_ip = "127.0.0.1" if sys.argv[1] == "localhost" else sys.argv[1]
-            self.master = (master_ip, int(sys.argv[2]))
-            self.channel = sys.argv[3].strip()
-            self.sockfd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.target: Tuple[str, int] = ("", 0)
-            self.periodic_running = False
-            self.peer_nat_type = ""
-        except (IndexError, ValueError):
-            print("usage: %s <host> <port> <channel>" % sys.argv[0])
-            sys.exit(65)
+    def __init__(self, server_ip: str, port: int, channel: str) -> None:
+        self.master = (server_ip, port)
+        self.channel = channel
+        self.sockfd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.target: Tuple[str, int] = ("", 0)
+        self.peer_nat_type = ""
 
     def request_for_connection(self, nat_type_id: int = 0) -> None:
         """ Send a request to the server for a connection. """
@@ -86,7 +80,7 @@ class Client:
             sock.sendto(data_bytes, self.target)
 
     @staticmethod
-    def start_working_threads(
+    def chat_fullcone(
         send: Callable[[socket.socket], None],
         recv: Callable[[socket.socket], None],
         sock: socket.socket,
@@ -99,20 +93,16 @@ class Client:
         tr.setDaemon(True)
         tr.start()
 
-    def chat_fullcone(self) -> None:
-        """ Start chat for a client behind a FullCone NAT. """
-        self.start_working_threads(self.send_msg, self.recv_msg, self.sockfd)
-
-    def main(self, test_nat_type: str = "") -> None:
+    def main(self) -> None:
         """ Start a chat session. """
         nat_type = test_nat_type
 
         # Connect to the server and request a channel.
-        self.request_for_connection(nat_type_id=NATTYPE.index(nat_type))
+        self.request_for_connection(nat_type_id=NATTYPE[0])
 
         # Chat with peer.
         print("FullCone chat mode")
-        self.chat_fullcone()
+        self.chat_fullcone(self.send_msg, self.recv_msg, self.sockfd)
 
         # Let the threads run.
         while True:
@@ -136,7 +126,25 @@ def bytes2addr(bytes_address: bytes) -> Tuple[Tuple[str, int], int]:
     return target, nat_type_id
 
 
+def main():
+    """ Run the client as a standlone script. """
+    # Set defaults.
+    server_ip = 127.0.0.1
+    port = 8000
+    channel = 100
+
+    # Parse command-line arguments.
+    if len(sys.argv) != 4:
+        print("usage: %s <host> <port> <channel>" % sys.argv[0])
+        sys.exit(65)
+    server_ip = sys.argv[1]
+    port = int(sys.argv[2])
+    channel = sys.argv[3].strip()
+
+    # Create and start the client.
+    c = Client(server_ip, port, channel)
+    c.main()
+
+
 if __name__ == "__main__":
-    c = Client()
-    TEST_NAT_TYPE = NATTYPE[int(sys.argv[4])]
-    c.main(TEST_NAT_TYPE)
+    main()
