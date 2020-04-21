@@ -135,7 +135,6 @@ class Client:
 
     def chat_fullcone(self) -> None:
         """ Start chat for a client behind a FullCone NAT. """
-        print("DEBUG: self.send_msg type:", type(self.send_msg))
         self.start_working_threads(
             self.send_msg, self.recv_msg, self.sockfd, event=None, is_restrict=False
         )

@@ -8,6 +8,9 @@ import struct
 from typing import Tuple, Callable
 from threading import Thread
 
+import multiprocessing as mp
+from multiprocessing.connection import Connection
+
 # pylint: disable=invalid-name
 
 FullCone = "Full Cone"  # 0
@@ -21,12 +24,24 @@ NATTYPE = (FullCone, RestrictNAT, RestrictPortNAT, SymmetricNAT, UnknownNAT)
 class Client:
     """ The UDP client for interacting with the server and other Clients. """
 
-    def __init__(self, server_ip: str, port: int, channel: str) -> None:
+    def __init__(
+        self,
+        server_ip: str,
+        port: int,
+        channel: str,
+        funnel: Connection,
+        spout: Connection,
+    ) -> None:
         self.master = (server_ip, port)
         self.channel = channel
         self.sockfd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        # If testing with server and both clients on localhost, use ``127.0.0.1``.
         self.target: Tuple[str, int] = ("", 0)
         self.peer_nat_type = ""
+
+        self.funnel = funnel
+        self.spout = spout
 
     def request_for_connection(self, nat_type_id: str = "0") -> None:
         """ Send a request to the server for a connection. """
@@ -65,23 +80,12 @@ class Client:
             data_bytes, addr = sock.recvfrom(1024)
             data = data_bytes.decode("ascii")
             if addr in (self.target, self.master):
-
-                if "ECHOED" not in data:
-                    self.echo_msg(sock, data)
-                else:
-                    print("%.10f:" % time.time(), data)
-
-    def echo_msg(self, sock: socket.socket, msg: str) -> None:
-        """ Echo message callback. """
-        data = "ECHOED: " + msg
-        data_bytes = data.encode("ascii")
-        sock.sendto(data_bytes, self.target)
+                self.funnel.send(data)
 
     def send_msg(self, sock: socket.socket) -> None:
         """ Send message callback. """
         while True:
-            data = sys.stdin.readline()
-            print("%.10f:" % time.time(), data)
+            data = self.spout.recv()
             data_bytes = data.encode("ascii")
             sock.sendto(data_bytes, self.target)
 
@@ -102,7 +106,7 @@ class Client:
     def main(self) -> None:
         """ Start a chat session. """
         # Connect to the server and request a channel.
-        self.request_for_connection(nat_type_id=0)
+        self.request_for_connection(nat_type_id="0")
 
         # Chat with peer.
         print("FullCone chat mode")
@@ -130,6 +134,20 @@ def bytes2addr(bytes_address: bytes) -> Tuple[Tuple[str, int], int]:
     return target, nat_type_id
 
 
+def get_stdin(in_funnel: Connection) -> None:
+    """ Send stdin from shell through client to peer. """
+    while 1:
+        data = sys.stdin.readline().replace("\n", "")
+        in_funnel.send(data)
+
+
+def recv_stdout(out_spout: Connection) -> None:
+    """ Print received messages. """
+    while 1:
+        data = out_spout.recv()
+        print("PUBLIC: stdout:", data)
+
+
 def main() -> None:
     """ Run the client as a standlone script. """
     # Set defaults.
@@ -145,9 +163,19 @@ def main() -> None:
     port = int(sys.argv[2])
     channel = sys.argv[3].strip()
 
+    # Create pipe for communication.
+    in_funnel, in_spout = mp.Pipe()
+    out_funnel, out_spout = mp.Pipe()
+
+    p_out = mp.Process(target=recv_stdout, args=(out_spout,))
+    p_out.start()
+
     # Create and start the client.
-    c = Client(server_ip, port, channel)
-    c.main()
+    c = Client(server_ip, port, channel, out_funnel, in_spout)
+    p_client = mp.Process(target=c.main)
+    p_client.start()
+
+    get_stdin(in_funnel)
 
 
 if __name__ == "__main__":
