@@ -6,7 +6,7 @@ import time
 import socket
 import struct
 import argparse
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Callable
 from threading import Event, Thread, Timer
 
 import stun
@@ -116,7 +116,11 @@ class Client:
 
     @staticmethod
     def start_working_threads(
-        send, recv, sock: socket.socket, event: Optional[Event], is_restrict: bool
+        send: Callable[[socket.socket], None],
+        recv: Callable[[socket.socket, Event, bool], None],
+        sock: socket.socket,
+        event: Optional[Event],
+        is_restrict: bool,
     ) -> None:
         """ Start the send and recv threads. """
         ts = Thread(target=send, args=(sock,))

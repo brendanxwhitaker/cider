@@ -128,9 +128,6 @@ def stun_test(
     sock: socket.socket, host: str, port: int, send_data: str = "",
 ) -> NATParameters:
     """ Connects to a STUN server to determine NAT parameters. """
-    # DEBUG
-    print("Type of 'sock':", type(sock))
-
     nat_parameters: NATParameters = {
         "Resp": False,
         "ExternalIP": "",
@@ -318,10 +315,7 @@ def stun_test(
 
 
 def get_nat_type(
-    sock: socket.socket,
-    source_ip: str,
-    stun_host: str = "",
-    stun_port: int = 3478,
+    sock: socket.socket, source_ip: str, stun_host: str = "", stun_port: int = 3478,
 ) -> Tuple[str, NATParameters]:
     """ Returns the NAT type. """
     _initialize()
@@ -370,12 +364,7 @@ def get_nat_type(
                 if ex_ip == ret["ExternalIP"] and ex_port == ret["ExternalPort"]:
                     change_port_request = "".join([ChangeRequest, "0004", "00000002"])
                     log.debug("Do Test3")
-                    ret = stun_test(
-                        sock,
-                        changed_ip,
-                        port,
-                        change_port_request,
-                    )
+                    ret = stun_test(sock, changed_ip, port, change_port_request,)
                     log.debug("Result: %s", ret)
                     if ret["Resp"]:
                         typ = RestrictNAT
@@ -397,9 +386,7 @@ def get_ip_info(
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((source_ip, source_port))
-    nat_type, nat = get_nat_type(
-        s, source_ip, stun_host=stun_host, stun_port=stun_port
-    )
+    nat_type, nat = get_nat_type(s, source_ip, stun_host=stun_host, stun_port=stun_port)
     external_ip = nat["ExternalIP"]
     external_port = nat["ExternalPort"]
     s.close()
