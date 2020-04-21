@@ -26,9 +26,9 @@ def bytes2addr(bytes_address: bytes) -> Tuple[Tuple[str, int], int]:
     if len(bytes_address) != 8:
         raise ValueError("invalid bytes_address")
     host = socket.inet_ntoa(bytes_address[:4])
-    port = struct.unpack("H", bytes_address[-4:-2])[
-        0
-    ]  # unpack returns a tuple even if it contains exactly one item
+
+    # Unpack returns a tuple even if it contains exactly one item.
+    port = struct.unpack("H", bytes_address[-4:-2])[0]
     nat_type_id = struct.unpack("H", bytes_address[-2:])[0]
     target = (host, port)
     return target, nat_type_id
@@ -103,7 +103,8 @@ class Client:
                 if addr in (self.target, self.master):
                     print("%.10f:" % time.time(), data)
                     # sys.stdout.write(data)
-                    if data == "punching...\n":  # peer是restrict
+                    # If peer is behind a restricted-type NAT.
+                    if data == "punching...\n":
                         sock.sendto("end punching".encode("ascii"), addr)
 
     def send_msg(self, sock: socket.socket) -> None:
@@ -185,21 +186,16 @@ class Client:
         )
 
     def main(self, test_nat_type: str = "") -> None:
-        """
-        nat_type是自己的nat类型
-        peer_nat_type是从服务器获取的对方的nat类型
-        选择哪种chat模式是根据nat_type来选择, 例如我这边的NAT设备是restrict, 那么我必须得一直向对方发包,
-        我的NAT设备才能识别对方为"我已经发过包的地址". 直到收到对方的包, periodic发送停止
-        """
+        """ Start a chat session. """
         if not test_nat_type:
             nat_type, _, _ = self.get_nat_type()
         else:
-            nat_type = test_nat_type  # 假装正在测试某种类型的NAT
+            nat_type = test_nat_type
         try:
             self.request_for_connection(nat_type_id=NATTYPE.index(nat_type))
         except ValueError:
             print(("NAT type is %s" % nat_type))
-            self.request_for_connection(nat_type_id=4)  # Unknown NAT
+            self.request_for_connection(nat_type_id=4)
 
         if UnknownNAT in (nat_type, self.peer_nat_type):
             print("Symmetric chat mode")
@@ -216,12 +212,13 @@ class Client:
         else:
             print("NAT type wrong!")
 
+        # Let the threads run.
         while True:
             try:
                 time.sleep(0.5)
             except KeyboardInterrupt:
                 print("exit")
-                sys.exit(0)
+                sys.exit()
 
     @staticmethod
     def get_nat_type() -> Tuple[str, str, int]:
@@ -282,7 +279,7 @@ class Client:
 if __name__ == "__main__":
     c = Client()
     try:
-        TEST_NAT_TYPE = NATTYPE[int(sys.argv[4])]  # 输入数字0,1,2,3
+        TEST_NAT_TYPE = NATTYPE[int(sys.argv[4])]
     except IndexError:
         TEST_NAT_TYPE = ""
 
