@@ -28,7 +28,7 @@ class Client:
         self.target: Tuple[str, int] = ("", 0)
         self.peer_nat_type = ""
 
-    def request_for_connection(self, nat_type_id: int = 0) -> None:
+    def request_for_connection(self, nat_type_id: str = "0") -> None:
         """ Send a request to the server for a connection. """
         # Create a socket.
         self.sockfd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -59,17 +59,23 @@ class Client:
         addr, port = self.target
         print("connected to %s:%s with NAT type: %s" % (addr, port, self.peer_nat_type))
 
-    def recv_msg(self, sock: socket.socket,) -> None:
+    def recv_msg(self, sock: socket.socket) -> None:
         """ Receive message callback. """
         while True:
             data_bytes, addr = sock.recvfrom(1024)
             data = data_bytes.decode("ascii")
             if addr in (self.target, self.master):
-                print("%.10f:" % time.time(), data)
-                # sys.stdout.write(data)
-                # If peer is behind a restricted-type NAT.
-                if data == "punching...\n":
-                    sock.sendto("end punching".encode("ascii"), addr)
+
+                if "ECHOED" not in data:
+                    self.echo_msg(sock, data)
+                else:
+                    print("%.10f:" % time.time(), data)
+
+    def echo_msg(self, sock: socket.socket, msg: str) -> None:
+        """ Echo message callback. """
+        data = "ECHOED: " + msg
+        data_bytes = data.encode("ascii")
+        sock.sendto(data_bytes, self.target)
 
     def send_msg(self, sock: socket.socket) -> None:
         """ Send message callback. """
@@ -95,8 +101,6 @@ class Client:
 
     def main(self) -> None:
         """ Start a chat session. """
-        nat_type = test_nat_type
-
         # Connect to the server and request a channel.
         self.request_for_connection(nat_type_id=NATTYPE[0])
 
@@ -126,12 +130,12 @@ def bytes2addr(bytes_address: bytes) -> Tuple[Tuple[str, int], int]:
     return target, nat_type_id
 
 
-def main():
+def main() -> None:
     """ Run the client as a standlone script. """
     # Set defaults.
-    server_ip = 127.0.0.1
+    server_ip = "127.0.0.1"
     port = 8000
-    channel = 100
+    channel = "100"
 
     # Parse command-line arguments.
     if len(sys.argv) != 4:
