@@ -5,7 +5,7 @@ import sys
 import time
 import socket
 import struct
-import optparse
+import argparse
 from typing import Tuple, Optional
 from threading import Event, Thread, Timer
 
@@ -130,6 +130,7 @@ class Client:
 
     def chat_fullcone(self) -> None:
         """ Start chat for a client behind a FullCone NAT. """
+        print("DEBUG: self.send_msg type:", type(self.send_msg))
         self.start_working_threads(
             self.send_msg, self.recv_msg, self.sockfd, event=None, is_restrict=False
         )
@@ -221,8 +222,9 @@ class Client:
     @staticmethod
     def get_nat_type() -> Tuple[str, str, int]:
         """ Parses arguments and returns the NAT type. """
-        parser = optparse.OptionParser(version=stun.__version__)
-        parser.add_option(
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
             "-d",
             "--debug",
             dest="DEBUG",
@@ -230,40 +232,41 @@ class Client:
             default=False,
             help="Enable debug logging",
         )
-        parser.add_option(
+        parser.add_argument(
             "-H", "--host", dest="stun_host", default=None, help="STUN host to use"
         )
-        parser.add_option(
+        parser.add_argument(
             "-P",
             "--host-port",
             dest="stun_port",
-            type="int",
+            type=int,
             default=3478,
             help="STUN host port to use (default: " "3478)",
         )
-        parser.add_option(
+        parser.add_argument(
             "-i",
             "--interface",
             dest="source_ip",
             default="0.0.0.0",
             help="network interface for client (default: 0.0.0.0)",
         )
-        parser.add_option(
+        parser.add_argument(
             "-p",
             "--port",
             dest="source_port",
-            type="int",
+            type=int,
             default=54320,
             help="port to listen on for client " "(default: 54320)",
         )
-        (options, _args) = parser.parse_args()
-        if options.DEBUG:
+        args = parser.parse_args()
+
+        if args.DEBUG:
             stun.enable_logging()
         kwargs = dict(
-            source_ip=options.source_ip,
-            source_port=int(options.source_port),
-            stun_host=options.stun_host,
-            stun_port=options.stun_port,
+            source_ip=args.source_ip,
+            source_port=int(args.source_port),
+            stun_host=args.stun_host,
+            stun_port=args.stun_port,
         )
         nat_type, external_ip, external_port = stun.get_ip_info(**kwargs)
         print(("NAT Type:", nat_type))
