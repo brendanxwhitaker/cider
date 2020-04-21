@@ -101,7 +101,6 @@ class Client:
 
     def chat_fullcone(self) -> None:
         """ Start chat for a client behind a FullCone NAT. """
-        print("DEBUG: self.send_msg type:", type(self.send_msg))
         self.start_working_threads(self.send_msg, self.recv_msg, self.sockfd)
 
     def main(self, test_nat_type: str = "") -> None:
@@ -112,6 +111,7 @@ class Client:
         self.request_for_connection(nat_type_id=NATTYPE.index(nat_type))
 
         # Chat with peer.
+        print("FullCone chat mode")
         self.chat_fullcone()
 
         # Let the threads run.
