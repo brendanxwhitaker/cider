@@ -102,7 +102,7 @@ class Client:
     def main(self) -> None:
         """ Start a chat session. """
         # Connect to the server and request a channel.
-        self.request_for_connection(nat_type_id=NATTYPE[0])
+        self.request_for_connection(nat_type_id=0)
 
         # Chat with peer.
         print("FullCone chat mode")
